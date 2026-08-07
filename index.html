@@ -301,7 +301,7 @@
     </div>
     <div id="touchpad">
       <div></div><button class="tp" data-dir="up">▲</button><div></div>
-      <button class="tp" data-dir="left">◀</button><div></div><button class="tp" data-dir="right">▶</button>
+      <button class="tp" data-dir="left">◀</button><button class="tp" id="pauseBtn">⏸</button><button class="tp" data-dir="right">▶</button>
       <div></div><button class="tp" data-dir="down">▼</button><div></div>
     </div>
   </div>
@@ -575,10 +575,13 @@ window.addEventListener('keydown', (e)=>{
     e.preventDefault();
   }
 });
-document.querySelectorAll('#touchpad .tp').forEach(btn=>{
+document.querySelectorAll('#touchpad .tp[data-dir]').forEach(btn=>{
   btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); groupDir = DIRS[btn.dataset.dir]; }, {passive:false});
   btn.addEventListener('click', ()=>{ groupDir = DIRS[btn.dataset.dir]; });
 });
+const pauseBtn = document.getElementById('pauseBtn');
+pauseBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); togglePause(); }, {passive:false});
+pauseBtn.addEventListener('click', togglePause);
 
 function togglePause(){
   if(state==='PLAYING'){ state='PAUSED'; showOverlay('SIMULATION PAUSED','Press P or Enter to resume.', '', ''); }
