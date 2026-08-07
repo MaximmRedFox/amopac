@@ -1,0 +1,1140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>AmoPac</title>
+<style>
+  :root{
+    --bg:#000;
+    --wall:#2121ff;
+    --wall-glow:#5a5aff;
+    --dot:#ffd7a8;
+    --text:#fff;
+    --amo:#00e5ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    background:radial-gradient(ellipse at center,#0a0a1a 0%,#000 70%);
+    color:var(--text);
+    font-family:'Courier New', Courier, monospace;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  #wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:10px;
+    width:100%;
+    max-width:640px;
+  }
+  h1{
+    font-size:1.3em;
+    letter-spacing:2px;
+    margin:6px 0 2px 0;
+    color:var(--amo);
+    text-shadow:0 0 8px var(--amo), 0 0 2px #fff;
+    text-align:center;
+  }
+  h1 span{ color:#ff4444; text-shadow:0 0 8px #ff4444; }
+  #simLabel{
+    font-size:0.62em;
+    letter-spacing:3px;
+    color:#7fe8ff;
+    text-transform:uppercase;
+    margin-top:2px;
+  }
+  #subtitle{
+    font-size:0.7em;
+    color:#8888aa;
+    margin:6px 0 10px 0;
+    text-align:center;
+    line-height:1.6;
+    max-width:480px;
+  }
+  #account{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:6px;
+    flex-wrap:wrap;
+  }
+  #account button, #leaderboardPanel button{
+    padding:6px 12px;
+    font-size:0.68em;
+    letter-spacing:1px;
+    margin:0;
+  }
+  #hud{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:100%;
+    max-width:504px;
+    padding:4px 6px;
+    font-size:0.85em;
+    letter-spacing:1px;
+  }
+  #hud .box{display:flex;flex-direction:column;align-items:center;min-width:70px;}
+  #hud .label{font-size:0.62em;color:#8888aa;}
+  #hud .value{font-size:1.05em;color:#fff;}
+  #squad{font-size:1.05em;letter-spacing:2px;}
+  #squad .dead{opacity:0.25; filter:grayscale(1);}
+  #stage{
+    position:relative;
+    margin-top:6px;
+    border:3px solid var(--wall);
+    box-shadow:0 0 20px var(--wall-glow), inset 0 0 20px rgba(90,90,255,0.2);
+    border-radius:6px;
+    max-width:100%;
+    background:#000;
+  }
+  canvas{
+    display:block;
+    max-width:100%;
+    height:auto;
+    image-rendering:pixelated;
+  }
+  #overlay{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,10,0.9);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:18px;
+    gap:9px;
+    border-radius:4px;
+    overflow-y:auto;
+    z-index:4;
+  }
+  #overlay.hidden{display:none;}
+  #overlay h2{
+    margin:0;
+    color:#ffe600;
+    text-shadow:0 0 10px #ffe600;
+    font-size:1.35em;
+    letter-spacing:2px;
+  }
+  #overlay p{
+    margin:2px 0;
+    font-size:0.78em;
+    color:#ccc;
+    max-width:390px;
+    line-height:1.55;
+  }
+  #overlay .big{font-size:1.5em;color:#fff;margin:4px 0;}
+  #overlay .note{font-size:0.68em;color:#7fe8ff;margin:0;}
+  button{
+    font-family:inherit;
+    background:linear-gradient(#1a1a3a,#0a0a1a);
+    border:2px solid var(--amo);
+    color:var(--amo);
+    padding:10px 22px;
+    font-size:0.9em;
+    letter-spacing:2px;
+    border-radius:6px;
+    cursor:pointer;
+    box-shadow:0 0 10px rgba(0,229,255,0.3);
+    margin-top:4px;
+  }
+  button:hover{background:#111133;}
+  button:active{transform:scale(0.97);}
+  #legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin:4px 0;
+    font-size:0.72em;
+  }
+  #legend .item{display:flex;flex-direction:column;align-items:center;gap:3px;max-width:110px;}
+  .swatch{width:20px;height:20px;border-radius:50%;}
+  .foot{
+    font-size:0.63em;
+    color:#666;
+    margin-top:10px;
+    text-align:center;
+    max-width:500px;
+    line-height:1.5;
+  }
+  kbd{
+    background:#111;
+    border:1px solid #444;
+    border-radius:3px;
+    padding:1px 6px;
+    color:#ddd;
+  }
+  #touchpad{
+    display:none;
+    position:absolute;
+    left:8px;
+    bottom:8px;
+    z-index:3;
+    grid-template-columns:42px 42px 42px;
+    grid-template-rows:42px 42px 42px;
+    gap:4px;
+  }
+  #touchpad button.tp{
+    margin:0;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.1em;
+    background:rgba(10,10,26,0.55);
+    border:2px solid rgba(0,229,255,0.55);
+    color:var(--amo);
+    box-shadow:0 0 8px rgba(0,229,255,0.25);
+    border-radius:8px;
+    backdrop-filter:blur(1px);
+  }
+  @media (pointer:coarse){
+    #touchpad{display:grid;}
+  }
+  #leaderboardPanel{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,10,0.95);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px;
+    border-radius:4px;
+    z-index:5;
+  }
+  #leaderboardPanel.hidden{display:none;}
+  #leaderboardPanel h2{ color:#ffe600; text-shadow:0 0 10px #ffe600; font-size:1.2em; letter-spacing:2px; margin:4px 0 10px 0;}
+  #leaderboardList{
+    list-style:none;
+    padding:0;
+    margin:0;
+    width:100%;
+    max-width:340px;
+    font-size:0.85em;
+    overflow-y:auto;
+    flex:1;
+  }
+  #leaderboardList li{
+    display:flex;
+    justify-content:space-between;
+    padding:5px 10px;
+    border-bottom:1px solid #1a1a3a;
+  }
+  #leaderboardList li.me{ color:#00e5ff; text-shadow:0 0 6px #00e5ff; }
+  #leaderboardList .empty{ color:#666; text-align:center; padding:20px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>AMOPAC</h1>
+  <div id="simLabel">Training Simulation 01</div>
+  <div id="subtitle">Command an AMO colony.<br>Harvest Signals.<br>Avoid the RUG.</div>
+
+  <div id="account">
+    <button id="connectXBtn">🔗 Link Carrier</button>
+    <button id="leaderboardBtn">🧬 Carrier Registry</button>
+    <button id="muteBtn" title="Toggle sound">🔊</button>
+  </div>
+
+  <div id="hud">
+    <div class="box"><div class="label">SIGNALS</div><div class="value" id="score">0</div></div>
+    <div class="box"><div class="label">STRAINS</div><div class="value" id="squad">🧬🧬🧬🧬</div></div>
+    <div class="box"><div class="label">PHASE</div><div class="value" id="level">1</div></div>
+    <div class="box"><div class="label">BEST</div><div class="value" id="highscore">0</div></div>
+  </div>
+
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="overlay">
+      <h2 id="ovTitle">AMOPAC</h2>
+      <p id="ovText">
+        Command <b>4 AMO Strains</b> at once: pick a direction and the whole colony moves together, each Strain from its own spot.<br>
+        <b>Dots</b> are Signals — harvest them before <b>RUG</b> does. RUG is dumb and just wanders, but if he crosses a dot he <b>steals</b> it from your Signal count.<br>
+        A <b>Pellet</b> respawns every so often in a corner. If <b>anyone</b> touches it — RUG or one of your own Strains — it triggers a <b>Signal Surge</b>: RUG goes hostile, <b>+50% speed</b>, and can <b>eat your Strains</b> for a while.<br>
+        A Strain eaten is gone for good — fewer Strains means simpler commands, but every mistake costs more.
+      </p>
+      <div id="legend">
+        <div class="item"><div class="swatch" style="background:#ffd7a8;"></div>Dot · +10 Signals to you, −10 if RUG takes it</div>
+        <div class="item"><div class="swatch" style="background:#ffd7a8;box-shadow:0 0 8px #ffd7a8;"></div>Pellet · respawns · triggers a Surge for anyone</div>
+        <div class="item"><div class="swatch" style="background:#ff3b1a;"></div>RUG surging</div>
+      </div>
+      <div class="big" id="ovBig"></div>
+      <p class="note" id="ovNote"></p>
+      <button id="startBtn">RUN SIMULATION</button>
+      <div class="foot">Move the colony with <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> or <kbd>WASD</kbd> · <kbd>P</kbd> pause · <kbd>Enter</kbd> start</div>
+    </div>
+    <div id="leaderboardPanel" class="hidden">
+      <h2>🧬 Carrier Registry</h2>
+      <ol id="leaderboardList"></ol>
+      <div class="foot">Saved on this device only — "Link Carrier" just tags your scores with a handle, it's not a real X login (that needs a backend + a registered OAuth app).</div>
+      <button id="closeLeaderboard">Close</button>
+    </div>
+    <div id="touchpad">
+      <div></div><button class="tp" data-dir="up">▲</button><div></div>
+      <button class="tp" data-dir="left">◀</button><div></div><button class="tp" data-dir="right">▶</button>
+      <div></div><button class="tp" data-dir="down">▼</button><div></div>
+    </div>
+  </div>
+
+  <div class="foot">Same rules as the classic arcade game, just flipped. Fan-made — no original assets copied. "RUG", "AMO" and "TSL" are just in-simulation nicknames, not affiliated with any token or project.</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============== CONFIG ============== */
+const TILE = 24;
+const COLS = 21, ROWS = 23;
+const TUNNEL_ROW = 11;
+
+const WALL=0, DOT=1, PELLET=2, EMPTY=3, DOOR=4;
+
+const DIRS = {
+  up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0}, none:{x:0,y:0}
+};
+
+// Bioluminescent blue palette for the AMO squad.
+const GHOST_COLORS = ['#00f2ff','#00b3ff','#4de3ff','#7fc9ff'];
+const GHOST_START = [{row:7,col:7},{row:7,col:13},{row:15,col:7},{row:15,col:13}];
+
+/* ============== MAZE GENERATION ============== */
+function buildMaze(){
+  const g = [];
+  for(let r=0;r<ROWS;r++){ g.push(new Array(COLS).fill(WALL)); }
+
+  for(let r=1;r<ROWS-1;r++){
+    for(let c=1;c<COLS-1;c++){
+      g[r][c] = DOT;
+    }
+  }
+  for(let r=2;r<ROWS-1;r+=2){
+    for(let c=2;c<COLS-1;c+=2){
+      g[r][c] = WALL;
+    }
+  }
+  const segments = [
+    [4,4,4,7],[4,13,4,16],
+    [18,4,18,7],[18,13,18,16],
+    [7,4,10,4],[7,16,10,16],
+    [12,4,15,4],[12,16,15,16],
+    [4,9,7,9],[4,11,7,11]
+  ];
+  segments.forEach(([r1,c1,r2,c2])=>{
+    if(r1===r2){ for(let c=c1;c<=c2;c++) g[r1][c]=WALL; }
+    else { for(let r=r1;r<=r2;r++) g[r][c1]=WALL; }
+  });
+
+  const hr=[10,11,12], hc=[8,9,10,11,12];
+  hr.forEach(r=> hc.forEach(c=>{ g[r][c]=EMPTY; }));
+  g[9][10] = DOOR;
+
+  g[1][1]=PELLET; g[1][COLS-2]=PELLET;
+  g[ROWS-2][1]=PELLET; g[ROWS-2][COLS-2]=PELLET;
+
+  g[TUNNEL_ROW][0] = EMPTY;
+  g[TUNNEL_ROW][COLS-1] = EMPTY;
+  g[TUNNEL_ROW][1] = (g[TUNNEL_ROW][1]===WALL)? DOT : g[TUNNEL_ROW][1];
+  g[TUNNEL_ROW][COLS-2] = (g[TUNNEL_ROW][COLS-2]===WALL)? DOT : g[TUNNEL_ROW][COLS-2];
+
+  g[11][10] = EMPTY; // RUG start
+  GHOST_START.forEach(p=>{ g[p.row][p.col] = DOT; });
+
+  ensureConnectivity(g);
+  return g;
+}
+
+function ensureConnectivity(g){
+  const startR=11,startC=10;
+  let seen = floodFill(g,startR,startC);
+  for(let r=1;r<ROWS-1;r++){
+    for(let c=1;c<COLS-1;c++){
+      if(g[r][c]!==WALL && !seen.has(r+","+c)){
+        carveBridge(g,r,c,seen);
+        seen = floodFill(g,startR,startC);
+      }
+    }
+  }
+}
+function carveBridge(g,r,c,seen){
+  const startKey = r+","+c;
+  const prev = new Map();
+  const visited = new Set([startKey]);
+  const queue = [[r,c]];
+  let target = null;
+  while(queue.length){
+    const [cr,cc] = queue.shift();
+    if(seen.has(cr+","+cc)){ target=[cr,cc]; break; }
+    for(const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const nr=cr+dr, nc=cc+dc;
+      if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+      const key = nr+","+nc;
+      if(!visited.has(key)){ visited.add(key); prev.set(key, cr+","+cc); queue.push([nr,nc]); }
+    }
+  }
+  if(!target) return;
+  let curKey = target[0]+","+target[1];
+  while(curKey!==startKey){
+    const [pr,pc] = curKey.split(",").map(Number);
+    if(g[pr][pc]===WALL) g[pr][pc]=DOT;
+    curKey = prev.get(curKey);
+  }
+}
+function floodFill(g,startR,startC){
+  const seen = new Set();
+  const stack=[[startR,startC]];
+  seen.add(startR+","+startC);
+  while(stack.length){
+    const [r,c] = stack.pop();
+    const nbrs = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+    for(const [nr,nc] of nbrs){
+      let ncW = ((nc%COLS)+COLS)%COLS;
+      if(nr<0||nr>=ROWS) continue;
+      if(g[nr][ncW]===WALL) continue;
+      const key = nr+","+ncW;
+      if(!seen.has(key)){ seen.add(key); stack.push([nr,ncW]); }
+    }
+  }
+  return seen;
+}
+
+/* ============== SFX (synthesized, lab-console style) ============== */
+// No audio files — every sound is a synthesized tone via Web Audio, so the
+// page stays a single self-contained file. Clean, short, clinical blips
+// rather than arcade jingles, to match a lab/simulation console feel.
+let audioCtx = null;
+let muted = localStorage.getItem('amopac_muted') === '1';
+function ensureAudio(){
+  if(muted) return;
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+    catch(e){ audioCtx = null; }
+  } else if(audioCtx.state==='suspended'){
+    audioCtx.resume();
+  }
+}
+function tone(freq, duration, type, gain, delay, freqEnd){
+  if(muted || !audioCtx) return;
+  const t0 = audioCtx.currentTime + (delay||0);
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type||'square';
+  osc.frequency.setValueAtTime(freq, t0);
+  if(freqEnd) osc.frequency.linearRampToValueAtTime(freqEnd, t0+duration);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(gain==null?0.05:gain, t0+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+duration);
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start(t0); osc.stop(t0+duration+0.03);
+}
+const SFX = {
+  click(){ tone(880,0.03,'square',0.03); },
+  dot(){ tone(1500,0.035,'square',0.03); },
+  dotStolen(){ tone(280,0.14,'sawtooth',0.05,0,120); },
+  surge(){ tone(220,0.4,'sawtooth',0.055,0,900); tone(220,0.4,'square',0.03,0.05,900); },
+  strainLost(){ tone(420,0.35,'sawtooth',0.07,0,70); },
+  mutation(){ [0,90,180].forEach((d,i)=> tone(560+i*220,0.09,'sine',0.05,d/1000)); },
+  phaseComplete(){ [0,110,220,330].forEach((d,i)=> tone(500+i*140,0.13,'sine',0.055,d/1000)); },
+  terminated(){ [0,160,320].forEach((d,i)=> tone(320-i*80,0.28,'sawtooth',0.06,d/1000)); }
+};
+function updateMuteUI(){
+  document.getElementById('muteBtn').textContent = muted ? '🔇' : '🔊';
+}
+function toggleMute(){
+  muted = !muted;
+  localStorage.setItem('amopac_muted', muted ? '1' : '0');
+  updateMuteUI();
+  if(!muted) ensureAudio();
+}
+
+/* ============== GAME STATE ============== */
+let maze, totalDots, dotsLeft;
+let score=0, highscore=Number(localStorage.getItem('amopac_best_signal')||0), level=1;
+let state = 'START';
+let stateTimer = 0;
+let fruit=null, fruitSpawned=false;
+let empowerTimer=0;
+let groupDir = {x:0,y:0};
+
+// The colony's visual mutation is a one-way ratchet driven by the highest
+// Signal count ever reached in the run, so RUG stealing points back never
+// "un-evolves" the Strains — it only slows the next mutation down.
+const MUTATION_THRESHOLDS = [0, 150, 400, 800, 1500, 2500];
+let signalsPeak = 0;
+let mutationStage = 0;
+let mutationToast = null; // {text, timer}
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+canvas.width = COLS*TILE;
+canvas.height = ROWS*TILE;
+
+function mkEntity(row,col,dir){
+  return { row, col, x:col*TILE+TILE/2, y:row*TILE+TILE/2, dir:dir||{x:0,y:0}, progress:0 };
+}
+
+const pac = mkEntity(11,10,{x:0,y:-1});
+let ghosts = GHOST_START.map(p=>{
+  const g = mkEntity(p.row,p.col,{x:0,y:0});
+  g.alive = true;
+  return g;
+});
+
+function resetRound(fullReset){
+  pac.row=11; pac.col=10; pac.x=10*TILE+TILE/2; pac.y=11*TILE+TILE/2; pac.dir={x:0,y:-1}; pac.progress=0;
+  empowerTimer = 0;
+  groupDir = {x:0,y:0};
+  ghosts.forEach((g,i)=>{
+    const p = GHOST_START[i];
+    g.row=p.row; g.col=p.col; g.x=p.col*TILE+TILE/2; g.y=p.row*TILE+TILE/2; g.dir={x:0,y:0}; g.progress=0;
+    if(fullReset) g.alive = true;
+  });
+}
+
+function newLevel(fullReset){
+  maze = buildMaze();
+  totalDots = countDots();
+  dotsLeft = totalDots;
+  fruit=null; fruitSpawned=false;
+  pelletRespawnTimer = 10;
+  resetRound(fullReset);
+  state='READY'; stateTimer=1.6;
+}
+
+function countDots(){
+  let n=0;
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) if(maze[r][c]===DOT) n++;
+  return n;
+}
+
+function startGame(){
+  score=0; level=1;
+  signalsPeak=0; mutationStage=0; mutationToast=null;
+  updateHUD();
+  newLevel(true);
+}
+
+function updateMutation(){
+  signalsPeak = Math.max(signalsPeak, score);
+  let stage = 0;
+  for(let i=0;i<MUTATION_THRESHOLDS.length;i++){ if(signalsPeak>=MUTATION_THRESHOLDS[i]) stage=i; }
+  if(stage>mutationStage){
+    mutationStage = stage;
+    mutationToast = {text:'MUTATION — STAGE '+stage, timer:2.5};
+    SFX.mutation();
+  }
+  if(mutationToast){
+    mutationToast.timer -= 1/60;
+    if(mutationToast.timer<=0) mutationToast=null;
+  }
+}
+
+/* ============== INPUT ============== */
+const keyMap = {
+  ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+  w:'up', s:'down', a:'left', d:'right', W:'up', S:'down', A:'left', D:'right'
+};
+window.addEventListener('keydown', (e)=>{
+  if(keyMap[e.key]){
+    groupDir = DIRS[keyMap[e.key]];
+    e.preventDefault();
+  } else if(e.key==='p' || e.key==='P'){
+    togglePause();
+  } else if(e.key==='Enter' || e.key===' '){
+    handlePrimary();
+    e.preventDefault();
+  }
+});
+document.querySelectorAll('#touchpad .tp').forEach(btn=>{
+  btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); groupDir = DIRS[btn.dataset.dir]; }, {passive:false});
+  btn.addEventListener('click', ()=>{ groupDir = DIRS[btn.dataset.dir]; });
+});
+
+function togglePause(){
+  if(state==='PLAYING'){ state='PAUSED'; showOverlay('SIMULATION PAUSED','Press P or Enter to resume.', '', ''); }
+  else if(state==='PAUSED'){ state='PLAYING'; hideOverlay(); }
+}
+function onPrimaryButton(){
+  if(state==='START' || state==='GAMEOVER'){ startGame(); hideOverlay(); }
+  else if(state==='PAUSED'){ state='PLAYING'; hideOverlay(); }
+  else if(state==='LEVEL_DONE'){ level++; updateHUD(); newLevel(false); hideOverlay(); }
+}
+
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('startBtn');
+
+// A fresh run (or a restart after Simulation Terminated) gets a short
+// boot sequence on the button itself before the maze actually appears.
+function handlePrimary(){
+  if(state==='START' || state==='GAMEOVER'){ beginWithBootSequence(); }
+  else { onPrimaryButton(); }
+}
+function beginWithBootSequence(){
+  if(startBtn.disabled) return;
+  ensureAudio(); // unlock Web Audio on this user gesture
+  SFX.click();
+  startBtn.disabled = true;
+  const original = startBtn.textContent;
+  startBtn.textContent = 'INITIALIZING...';
+  tone(700,0.06,'square',0.03,0.1);
+  tone(900,0.06,'square',0.03,0.3);
+  setTimeout(()=>{
+    startBtn.textContent = 'SIMULATION ACTIVE';
+    tone(1100,0.1,'sine',0.05);
+    setTimeout(()=>{
+      onPrimaryButton();
+      startBtn.disabled = false;
+      startBtn.textContent = original;
+    }, 450);
+  }, 650);
+}
+startBtn.addEventListener('click', handlePrimary);
+function showOverlay(title,text,big,note){
+  document.getElementById('ovTitle').textContent = title;
+  document.getElementById('ovText').innerHTML = text;
+  document.getElementById('ovBig').textContent = big||'';
+  document.getElementById('ovNote').textContent = note||'';
+  overlay.classList.remove('hidden');
+}
+function hideOverlay(){ overlay.classList.add('hidden'); }
+
+/* ============== CARRIER ID (local handle) + REGISTRY ============== */
+// NOTE: this is a local nickname tag, not a real X/Twitter login — a static
+// page like this one has no backend or registered OAuth app to verify one.
+function getHandle(){ return localStorage.getItem('amopac_carrier') || ''; }
+function setHandle(h){
+  if(h) localStorage.setItem('amopac_carrier', h);
+  else localStorage.removeItem('amopac_carrier');
+  updateAccountUI();
+}
+function updateAccountUI(){
+  const h = getHandle();
+  const btn = document.getElementById('connectXBtn');
+  btn.textContent = h ? ('🔗 '+h) : '🔗 Link Carrier';
+}
+document.getElementById('connectXBtn').addEventListener('click', ()=>{
+  const current = getHandle();
+  const input = prompt(
+    'Enter your X (Twitter) handle as your Carrier ID.\n' +
+    '(Local only — this does not log into X, there is no server here to verify it.)\n' +
+    'Leave empty to unlink.',
+    current || '@'
+  );
+  if(input===null) return;
+  const trimmed = input.trim();
+  if(!trimmed){ setHandle(''); return; }
+  setHandle(trimmed.startsWith('@') ? trimmed : '@'+trimmed);
+});
+
+function loadLeaderboard(){
+  try{ return JSON.parse(localStorage.getItem('amopac_registry')||'[]'); }
+  catch(e){ return []; }
+}
+function saveScoreToLeaderboard(finalScore){
+  const handle = getHandle();
+  if(!handle || finalScore<=0) return;
+  const board = loadLeaderboard();
+  const idx = board.findIndex(e=>e.handle===handle);
+  if(idx>=0){ if(finalScore>board[idx].score) board[idx].score=finalScore; }
+  else { board.push({handle, score:finalScore}); }
+  board.sort((a,b)=>b.score-a.score);
+  localStorage.setItem('amopac_registry', JSON.stringify(board.slice(0,20)));
+}
+function renderLeaderboard(){
+  const board = loadLeaderboard();
+  const list = document.getElementById('leaderboardList');
+  const me = getHandle();
+  if(board.length===0){
+    list.innerHTML = '<li class="empty">No carriers logged yet — link your ID and run the simulation!</li>';
+    return;
+  }
+  list.innerHTML = board.map((e,i)=>
+    '<li class="'+(e.handle===me?'me':'')+'">'+(i+1)+'. '+escapeHtml(e.handle)+'<span>'+e.score+'</span></li>'
+  ).join('');
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+const leaderboardPanel = document.getElementById('leaderboardPanel');
+document.getElementById('leaderboardBtn').addEventListener('click', ()=>{
+  SFX.click();
+  renderLeaderboard();
+  leaderboardPanel.classList.remove('hidden');
+});
+document.getElementById('closeLeaderboard').addEventListener('click', ()=>{
+  SFX.click();
+  leaderboardPanel.classList.add('hidden');
+});
+document.getElementById('muteBtn').addEventListener('click', toggleMute);
+
+/* ============== MOVEMENT ============== */
+function canEnter(row,col){
+  if(row<0||row>=ROWS) return false;
+  let cc = ((col%COLS)+COLS)%COLS;
+  return maze[row][cc] !== WALL;
+}
+
+function tryTurn(e, chooseDir){
+  const desired = chooseDir(e);
+  if(desired && (desired.x||desired.y) && canEnter(e.row+desired.y, e.col+desired.x)){
+    e.dir = desired;
+  }
+  if(!canEnter(e.row+e.dir.y, e.col+e.dir.x)){
+    e.dir = {x:0,y:0};
+  }
+}
+
+function stepEntity(e, speedTilesPerSec, dt, chooseDir){
+  if(e.progress===0){
+    tryTurn(e, chooseDir);
+  }
+  if(e.dir.x!==0 || e.dir.y!==0){
+    e.progress += speedTilesPerSec*dt;
+    let guard=0;
+    while(e.progress>=1 && guard<4){
+      guard++;
+      e.progress -= 1;
+      e.row += e.dir.y; e.col += e.dir.x;
+      if(e.col<0) e.col+=COLS;
+      if(e.col>=COLS) e.col-=COLS;
+      tryTurn(e, chooseDir);
+      if(e.dir.x===0 && e.dir.y===0){ e.progress=0; break; }
+    }
+  }
+  e.x = (e.col + e.dir.x*e.progress)*TILE + TILE/2;
+  e.y = (e.row + e.dir.y*e.progress)*TILE + TILE/2;
+}
+
+function ghostChoose(){ return groupDir; }
+
+function bestDirToward(e, target, opts){
+  const wantMax = !!(opts && opts.max);
+  const candDirs = ['up','down','left','right'].map(k=>DIRS[k]);
+  const reverse = {x:-e.dir.x,y:-e.dir.y};
+  let candidates = candDirs.filter(d=> canEnter(e.row+d.y, e.col+d.x));
+  if(candidates.length>1){
+    candidates = candidates.filter(d=> !(d.x===reverse.x && d.y===reverse.y));
+  }
+  if(candidates.length===0) return e.dir;
+  let best=null, bestScore = wantMax ? -Infinity : Infinity;
+  for(const d of candidates){
+    const nr=e.row+d.y, nc=e.col+d.x;
+    const dist=(nr-target.row)*(nr-target.row)+(nc-target.col)*(nc-target.col);
+    if(wantMax ? dist>bestScore : dist<bestScore){ bestScore=dist; best=d; }
+  }
+  if(Math.random()<0.05 && candidates.length>1){
+    best = candidates[Math.floor(Math.random()*candidates.length)];
+  }
+  return best || e.dir;
+}
+
+function randomWander(e){
+  const candDirs = ['up','down','left','right'].map(k=>DIRS[k]);
+  const reverse = {x:-e.dir.x,y:-e.dir.y};
+  let candidates = candDirs.filter(d=> canEnter(e.row+d.y, e.col+d.x));
+  if(candidates.length>1) candidates = candidates.filter(d=> !(d.x===reverse.x && d.y===reverse.y));
+  if(candidates.length===0) return e.dir;
+  // RUG is dumb: he mostly just keeps going the way he's already going,
+  // only picking a new random direction when he must (wall/intersection),
+  // so he doesn't zig-zag at every single tile.
+  const canContinue = candidates.some(d=>d.x===e.dir.x && d.y===e.dir.y);
+  if(canContinue && Math.random()<0.6) return e.dir;
+  return candidates[Math.floor(Math.random()*candidates.length)];
+}
+function nearestGhost(){
+  let best=null, bestD=Infinity;
+  ghosts.forEach(g=>{
+    if(!g.alive) return;
+    const d=(g.row-pac.row)*(g.row-pac.row)+(g.col-pac.col)*(g.col-pac.col);
+    if(d<bestD){ bestD=d; best=g; }
+  });
+  return best;
+}
+
+function pacChoose(e){
+  if(empowerTimer>0){
+    const t = nearestGhost();
+    if(t) return bestDirToward(e, {row:t.row,col:t.col});
+  }
+  // RUG is dumb and low on energy: he doesn't hunt for pellets or dots on
+  // purpose, he just wanders — and eats whatever he happens to cross.
+  return randomWander(e);
+}
+
+/* ============== GAME LOOP ============== */
+function ghostSpeed(){ return Math.min(6.2 + (level-1)*0.1, 7.5); }
+function rugBaseSpeed(){ return Math.min(4.6 + (level-1)*0.1, 6.0); }
+function pacSpeed(){
+  // A pellet gives RUG a burst of energy: +50% speed on top of danger.
+  return empowerTimer>0 ? rugBaseSpeed()*1.5 : rugBaseSpeed();
+}
+
+function triggerSignalSurge(){
+  empowerTimer = 6;
+  SFX.surge();
+}
+
+function eatDotsUnder(g){
+  const c = ((g.col%COLS)+COLS)%COLS;
+  const cell = maze[g.row][c];
+  if(cell===DOT){
+    maze[g.row][c]=EMPTY; score+=10; dotsLeft--;
+    SFX.dot();
+  } else if(cell===PELLET){
+    // Your own Strains can trip the pellet too — careful where you send them.
+    maze[g.row][c]=EMPTY;
+    triggerSignalSurge();
+  }
+}
+function eatPelletUnder(){
+  const c = ((pac.col%COLS)+COLS)%COLS;
+  const cell = maze[pac.row][c];
+  if(cell===PELLET){
+    maze[pac.row][c]=EMPTY;
+    triggerSignalSurge();
+  } else if(cell===DOT){
+    // RUG snacking on your dots steals back the Signals they were worth.
+    maze[pac.row][c]=EMPTY; dotsLeft--; score = Math.max(0, score-10);
+    SFX.dotStolen();
+  }
+}
+
+const PELLET_SPOTS = [
+  {row:1,col:1}, {row:1,col:COLS-2},
+  {row:ROWS-2,col:1}, {row:ROWS-2,col:COLS-2}
+];
+let pelletRespawnTimer = 10;
+function updatePelletRespawn(dt){
+  pelletRespawnTimer -= dt;
+  if(pelletRespawnTimer<=0){
+    const empty = PELLET_SPOTS.filter(p=> maze[p.row][p.col] !== PELLET);
+    if(empty.length){
+      const spot = empty[Math.floor(Math.random()*empty.length)];
+      maze[spot.row][spot.col] = PELLET;
+    }
+    pelletRespawnTimer = 9 + Math.random()*8; // every ~9-17s
+  }
+}
+
+function checkFruit(){
+  if(!fruitSpawned && dotsLeft <= totalDots*0.6){
+    fruitSpawned = true;
+    fruit = {row:9, col:10, timer:9};
+  }
+  if(fruit){
+    fruit.timer -= 1/60;
+    const eaten = ghosts.some(g=> g.alive && g.row===fruit.row && g.col===fruit.col);
+    if(eaten){ score+=100; fruit=null; }
+    else if(fruit && fruit.timer<=0){ fruit=null; }
+  }
+}
+
+function updateHUD(){
+  document.getElementById('score').textContent = score;
+  document.getElementById('level').textContent = level;
+  document.getElementById('highscore').textContent = Math.max(highscore,score);
+  document.getElementById('squad').innerHTML = ghosts.map(g=> g.alive?'🧬':'<span class="dead">🧬</span>').join('');
+}
+
+let lastTs = performance.now();
+
+function loop(ts){
+  let dt = (ts-lastTs)/1000; lastTs = ts;
+  if(dt>0.05) dt=0.05;
+  if(state==='READY'){
+    stateTimer -= dt;
+    if(stateTimer<=0){ state='PLAYING'; }
+  } else if(state==='PLAYING'){
+    update(dt);
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+function update(dt){
+  ghosts.forEach(g=>{ if(g.alive) stepEntity(g, ghostSpeed(), dt, ghostChoose); });
+  stepEntity(pac, pacSpeed(), dt, pacChoose);
+
+  ghosts.forEach(g=>{ if(g.alive) eatDotsUnder(g); });
+  eatPelletUnder();
+  checkFruit();
+  updatePelletRespawn(dt);
+  updateMutation();
+
+  if(empowerTimer>0){
+    empowerTimer -= dt;
+    if(empowerTimer<0) empowerTimer=0;
+  }
+
+  // Collisions: only dangerous during a Signal Surge, and RUG only has
+  // enough energy to take ONE Strain per Surge — even if the whole colony
+  // is clustered together, only the nearest one is caught, then the Surge
+  // is immediately spent. Wiping the whole colony in one touch felt unfair.
+  if(empowerTimer>0){
+    let caught=null, caughtDist=Infinity;
+    ghosts.forEach(g=>{
+      if(!g.alive) return;
+      const dx=g.x-pac.x, dy=g.y-pac.y;
+      const d = dx*dx+dy*dy;
+      if(d < (TILE*0.6)*(TILE*0.6) && d<caughtDist){ caught=g; caughtDist=d; }
+    });
+    if(caught){
+      caught.alive = false;
+      empowerTimer = 0;
+      SFX.strainLost();
+    }
+  }
+  updateHUD();
+
+  const aliveCount = ghosts.filter(g=>g.alive).length;
+  if(aliveCount===0){
+    state='GAMEOVER';
+    if(score>highscore){ highscore=score; localStorage.setItem('amopac_best_signal', String(highscore)); }
+    saveScoreToLeaderboard(score);
+    const note = getHandle() ? ('Logged to the Carrier Registry for '+getHandle()+'.') : 'Link Carrier above (top of page) to log this run in the Carrier Registry.';
+    showOverlay('SIMULATION TERMINATED','RUG wiped out every Strain in the colony.<br>Press Enter to run it again.', 'Signals: '+score, note);
+    SFX.terminated();
+    return;
+  }
+  if(dotsLeft<=0){
+    state='LEVEL_DONE';
+    showOverlay('PHASE COMPLETE','Your colony cleared the sector.<br>Press Enter to begin the next phase.', 'Signals: '+score, '');
+    SFX.phaseComplete();
+    return;
+  }
+}
+
+/* ============== RENDER ============== */
+function render(){
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawMaze();
+  drawFruit();
+  drawRug();
+  ghosts.forEach((g,i)=>{ if(g.alive) drawGhost(g, GHOST_COLORS[i], i); });
+  drawMutationToast();
+}
+
+function drawMaze(){
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const cell=maze[r][c];
+      const x=c*TILE, y=r*TILE;
+      if(cell===WALL){
+        ctx.fillStyle='#0b0b2e';
+        ctx.fillRect(x,y,TILE,TILE);
+        ctx.strokeStyle='rgba(90,90,255,0.9)';
+        ctx.lineWidth=2;
+        ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+      } else if(cell===DOOR){
+        ctx.strokeStyle='#ff9bd2';
+        ctx.lineWidth=2;
+        ctx.beginPath();
+        ctx.moveTo(x+3,y+TILE/2); ctx.lineTo(x+TILE-3,y+TILE/2);
+        ctx.stroke();
+      } else if(cell===DOT){
+        ctx.fillStyle='#ffd7a8';
+        ctx.beginPath();
+        ctx.arc(x+TILE/2,y+TILE/2,2.6,0,Math.PI*2);
+        ctx.fill();
+      } else if(cell===PELLET){
+        const pulse=3.5+Math.sin(performance.now()/150)*1.5;
+        ctx.fillStyle='#ffd7a8';
+        ctx.shadowColor='#ffd7a8'; ctx.shadowBlur=8;
+        ctx.beginPath();
+        ctx.arc(x+TILE/2,y+TILE/2,pulse,0,Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur=0;
+      }
+    }
+  }
+}
+
+function drawFruit(){
+  if(!fruit) return;
+  const x=fruit.col*TILE+TILE/2, y=fruit.row*TILE+TILE/2;
+  ctx.fillStyle='#ff3b3b';
+  ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2a8f2a'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(x,y-7); ctx.lineTo(x+4,y-13); ctx.stroke();
+}
+
+function dirAngle(dir){
+  if(dir.x===1) return 0;
+  if(dir.x===-1) return Math.PI;
+  if(dir.y===1) return Math.PI/2;
+  if(dir.y===-1) return -Math.PI/2;
+  return 0;
+}
+
+// Mutation accent color shifts as the colony evolves (stage 0 = base cyan/blue).
+const MUTATION_ACCENTS = ['#003a66','#00306e','#7a1fb8','#c21fb8','#ff1f8f','#fff200'];
+
+function drawGhost(g,color,i){
+  const x=g.x, y=g.y, r=TILE/2-2;
+  const stage = mutationStage;
+  const glow = 9 + stage*2 + Math.sin(performance.now()/280 + i*1.7)*4; // bioluminescent pulse
+  ctx.save();
+  ctx.translate(x,y);
+
+  // Stage 5: faint pulsing aura ring around the whole body.
+  if(stage>=5){
+    const auraR = r + 4 + Math.sin(performance.now()/220+i)*1.5;
+    ctx.strokeStyle=color; ctx.globalAlpha=0.35; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(0,0,auraR,0,Math.PI*2); ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+
+  // Soft rounded body — dome on top, one gentle curve on the bottom
+  // instead of the classic zig-zag ghost skirt (a different silhouette).
+  ctx.fillStyle=color;
+  ctx.shadowColor=color; ctx.shadowBlur=glow;
+  ctx.beginPath();
+  ctx.arc(0,-1,r,Math.PI,0,false);
+  ctx.lineTo(r,r*0.55);
+  ctx.quadraticCurveTo(r,r+3,0,r+3);
+  ctx.quadraticCurveTo(-r,r+3,-r,r*0.55);
+  ctx.closePath();
+  ctx.fill();
+
+  // Stage 1+: a small spike sprouts from the crown.
+  if(stage>=1){
+    ctx.beginPath();
+    ctx.moveTo(-3,-r+2); ctx.lineTo(0,-r-6); ctx.lineTo(3,-r+2);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.shadowBlur=0;
+
+  // Stage 3+: small mutation spots on the body.
+  if(stage>=3){
+    ctx.fillStyle=MUTATION_ACCENTS[Math.min(stage,MUTATION_ACCENTS.length-1)];
+    ctx.shadowColor=ctx.fillStyle; ctx.shadowBlur=5;
+    ctx.beginPath(); ctx.arc(-r*0.5,r*0.35,1.8,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.45,r*0.15,1.6,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+
+  const ex=g.dir.x*2, ey=g.dir.y*2;
+  if(stage>=4){
+    // Fully evolved: solid glowing alien eyes, no white sclera.
+    const eyeColor = MUTATION_ACCENTS[Math.min(stage,MUTATION_ACCENTS.length-1)];
+    ctx.fillStyle=eyeColor; ctx.shadowColor=eyeColor; ctx.shadowBlur=7;
+    ctx.beginPath(); ctx.ellipse(-5+ex,-3+ey,3,4,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5+ex,-3+ey,3,4,0,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  } else {
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(-5+ex,-3+ey,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(5+ex,-3+ey,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle = MUTATION_ACCENTS[Math.min(stage,MUTATION_ACCENTS.length-1)];
+    ctx.beginPath(); ctx.arc(-5+ex+g.dir.x*1.5,-3+ey+g.dir.y*1.5,2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(5+ex+g.dir.x*1.5,-3+ey+g.dir.y*1.5,2,0,Math.PI*2); ctx.fill();
+  }
+
+  // Classic square lab glasses — worn at every mutation stage, the one
+  // thing about them that never changes.
+  const lens=5, half=lens/2, gy=-3+ey;
+  ctx.strokeStyle='rgba(15,15,25,0.9)';
+  ctx.lineWidth=1.4;
+  ctx.strokeRect(-5+ex-half, gy-half, lens, lens);
+  ctx.strokeRect(5+ex-half, gy-half, lens, lens);
+  ctx.beginPath();
+  ctx.moveTo(-5+ex+half, gy);
+  ctx.lineTo(5+ex-half, gy);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawMutationToast(){
+  if(!mutationToast) return;
+  const alpha = Math.min(1, mutationToast.timer);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = 'bold 13px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff1f8f';
+  ctx.shadowColor = '#ff1f8f'; ctx.shadowBlur = 8;
+  ctx.fillText(mutationToast.text, canvas.width/2, 26);
+  ctx.restore();
+}
+
+function tracePath(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h);
+  ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r);
+  ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
+// RUG is drawn as a little flying carpet, not a pie-chomping circle — a
+// deliberately different silhouette from the arcade character it's inspired by.
+function drawRug(){
+  const x=pac.x, y=pac.y;
+  const danger = empowerTimer>0;
+  const flashing = danger && empowerTimer<2 && Math.floor(performance.now()/120)%2===0;
+  const w = TILE-3, h = TILE*0.58;
+  const bob = Math.sin(performance.now()/160)*1.2;
+  const baseColor = flashing ? '#fff' : (danger ? '#ff3b1a' : '#ffe600');
+  const accent = flashing ? '#999' : (danger ? '#7a0000' : '#8a6a00');
+
+  ctx.save();
+  ctx.translate(x, y+bob);
+  ctx.rotate(dirAngle(pac.dir));
+
+  ctx.fillStyle = baseColor;
+  ctx.shadowColor = baseColor; ctx.shadowBlur = danger?10:6;
+  tracePath(-w/2,-h/2,w,h,3);
+  ctx.fill();
+  ctx.shadowBlur=0;
+
+  // woven border + diamond pattern
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 1;
+  tracePath(-w/2+3,-h/2+3,w-6,h-6,2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0,-h/2+3); ctx.lineTo(w/2-3,0); ctx.lineTo(0,h/2-3); ctx.lineTo(-w/2+3,0);
+  ctx.closePath();
+  ctx.stroke();
+
+  // fluttering fringe tassels on the two short ends
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 1.4;
+  const tassels = 4;
+  for(let i=0;i<tassels;i++){
+    const ty = -h/2 + (i+0.5)*(h/tassels) + Math.sin(performance.now()/140 + i)*0.6;
+    ctx.beginPath(); ctx.moveTo(-w/2,ty); ctx.lineTo(-w/2-3,ty); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w/2,ty); ctx.lineTo(w/2+3,ty); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ============== BOOT ============== */
+maze = buildMaze();
+totalDots = countDots(); dotsLeft = totalDots;
+updateHUD();
+updateAccountUI();
+updateMuteUI();
+showOverlay('AMOPAC','Command your AMO colony, harvest Signals, and stay clear of RUG once a Signal Surge lights him up!','','');
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
