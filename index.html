@@ -659,24 +659,65 @@ document.getElementById('connectXBtn').addEventListener('click', ()=>{
   setHandle(trimmed.startsWith('@') ? trimmed : '@'+trimmed);
 });
 
-function loadLeaderboard(){
-  try{ return JSON.parse(localStorage.getItem('amopac_registry')||'[]'); }
-  catch(e){ return []; }
+// Shared, public Carrier Registry backed by Supabase (Postgres + auto REST
+// API). The anon key below is meant to be public — it can only do what the
+// table's Row Level Security policies allow (public read, public insert,
+// no update/delete), so it's safe to ship in client-side code.
+const SUPABASE_URL = 'https://uudftriqohvsgktrdkvc.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1ZGZ0cmlxb2h2c2drdHJka3ZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxMTg3MjQsImV4cCI6MjEwMTY5NDcyNH0.ic8Bt4JYE4FGk0SxmLbOoSB4wLTSUGvbl139Hyi2QWk';
+const REGISTRY_TABLE = 'carrier_registry';
+
+async function fetchRegistry(){
+  const url = `${SUPABASE_URL}/rest/v1/${REGISTRY_TABLE}?select=handle,score&order=score.desc&limit=200`;
+  const res = await fetch(url, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer '+SUPABASE_ANON_KEY }
+  });
+  if(!res.ok) throw new Error('registry fetch failed: '+res.status);
+  const rows = await res.json();
+  // Keep only each carrier's best run for display.
+  const best = new Map();
+  rows.forEach(r=>{
+    const prev = best.get(r.handle);
+    if(!prev || r.score>prev) best.set(r.handle, r.score);
+  });
+  return [...best.entries()]
+    .map(([handle,score])=>({handle,score}))
+    .sort((a,b)=>b.score-a.score)
+    .slice(0,20);
+}
+async function postScore(handle, score){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${REGISTRY_TABLE}`, {
+    method:'POST',
+    headers:{
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: 'Bearer '+SUPABASE_ANON_KEY,
+      'Content-Type':'application/json',
+      Prefer:'return=minimal'
+    },
+    body: JSON.stringify({handle, score})
+  });
+  if(!res.ok) throw new Error('registry insert failed: '+res.status);
 }
 function saveScoreToLeaderboard(finalScore){
   const handle = getHandle();
   if(!handle || finalScore<=0) return;
-  const board = loadLeaderboard();
-  const idx = board.findIndex(e=>e.handle===handle);
-  if(idx>=0){ if(finalScore>board[idx].score) board[idx].score=finalScore; }
-  else { board.push({handle, score:finalScore}); }
-  board.sort((a,b)=>b.score-a.score);
-  localStorage.setItem('amopac_registry', JSON.stringify(board.slice(0,20)));
+  postScore(handle, finalScore).catch(err=>{
+    console.warn('Could not log score to the Carrier Registry:', err);
+    const note = document.getElementById('ovNote');
+    if(note) note.textContent = 'Couldn\'t reach the Carrier Registry — score not logged this time.';
+  });
 }
-function renderLeaderboard(){
-  const board = loadLeaderboard();
+async function renderLeaderboard(){
   const list = document.getElementById('leaderboardList');
   const me = getHandle();
+  list.innerHTML = '<li class="empty">Loading…</li>';
+  let board;
+  try{ board = await fetchRegistry(); }
+  catch(err){
+    console.warn('Could not load the Carrier Registry:', err);
+    list.innerHTML = '<li class="empty">Couldn\'t reach the registry. Check your connection and try again.</li>';
+    return;
+  }
   if(board.length===0){
     list.innerHTML = '<li class="empty">No carriers logged yet — link your ID and run the simulation!</li>';
     return;
@@ -690,8 +731,8 @@ function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;'
 const leaderboardPanel = document.getElementById('leaderboardPanel');
 document.getElementById('leaderboardBtn').addEventListener('click', ()=>{
   SFX.click();
-  renderLeaderboard();
   leaderboardPanel.classList.remove('hidden');
+  renderLeaderboard();
 });
 document.getElementById('closeLeaderboard').addEventListener('click', ()=>{
   SFX.click();
