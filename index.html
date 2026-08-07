@@ -46,8 +46,11 @@
          above/below it (title, HUD, footer) eats a roughly fixed ~280px
          of vertical space — so width has to be solved from the *height*
          budget here, not just capped by a flat vw percentage, or a big
-         landscape window would force scrolling to see the whole page. */
-      max-width:min(92vw, calc((92vh - 280px) / 1.1), 900px);
+         landscape window would force scrolling to see the whole page.
+         Floored at 540px so shorter laptop windows (e.g. 1366x768)
+         never end up *smaller* than the mobile default — a little
+         scroll there beats a shrunken board. */
+      max-width:clamp(540px, min(92vw, calc((92vh - 280px) / 1.1)), 900px);
     }
   }
   h1{
