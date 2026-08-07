@@ -35,7 +35,11 @@
     align-items:center;
     padding:10px;
     width:100%;
-    max-width:min(92vw, 82vh, 820px);
+    /* The maze is taller than it is wide (23x21 tiles), and everything
+       above/below it (title, HUD, footer) eats a roughly fixed ~280px of
+       vertical space — so width has to be solved from the *height* budget,
+       not just capped by a flat vh percentage. */
+    max-width:min(92vw, calc((92vh - 280px) / 1.1), 900px);
   }
   h1{
     font-size:1.3em;
