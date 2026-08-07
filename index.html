@@ -35,11 +35,20 @@
     align-items:center;
     padding:10px;
     width:100%;
-    /* The maze is taller than it is wide (23x21 tiles), and everything
-       above/below it (title, HUD, footer) eats a roughly fixed ~280px of
-       vertical space — so width has to be solved from the *height* budget,
-       not just capped by a flat vh percentage. */
-    max-width:min(92vw, calc((92vh - 280px) / 1.1), 900px);
+    /* Mobile/tablet: just use the available width — a little vertical
+       scroll on a phone is normal and expected. */
+    max-width:min(92vw, 820px);
+  }
+  @media (min-width:900px){
+    #wrap{
+      /* Desktop/laptop windows are usually wider than they are tall, and
+         the maze is taller than it is wide (23x21 tiles) — everything
+         above/below it (title, HUD, footer) eats a roughly fixed ~280px
+         of vertical space — so width has to be solved from the *height*
+         budget here, not just capped by a flat vw percentage, or a big
+         landscape window would force scrolling to see the whole page. */
+      max-width:min(92vw, calc((92vh - 280px) / 1.1), 900px);
+    }
   }
   h1{
     font-size:1.3em;
