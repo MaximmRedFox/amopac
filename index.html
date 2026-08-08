@@ -199,14 +199,10 @@
     display:grid;
     grid-template-columns:46px 46px 46px;
     grid-template-rows:46px 46px 46px;
-    gap:7px;
+    gap:1px;
     padding:10px;
     border-radius:50%;
     background:radial-gradient(circle at center, rgba(0,229,255,0.09) 0%, rgba(0,229,255,0.02) 65%, transparent 75%);
-  }
-  #dpad .hub{
-    border-radius:50%;
-    border:1.5px solid rgba(0,229,255,0.25);
   }
   #touchpad button.tp{
     margin:0;
@@ -314,7 +310,7 @@
     <button class="tp pauseBtn">⏸</button>
     <div id="dpad">
       <div></div><button class="tp" data-dir="up">▲</button><div></div>
-      <button class="tp" data-dir="left">◀</button><div class="hub"></div><button class="tp" data-dir="right">▶</button>
+      <button class="tp" data-dir="left">◀</button><div></div><button class="tp" data-dir="right">▶</button>
       <div></div><button class="tp" data-dir="down">▼</button><div></div>
     </div>
     <button class="tp pauseBtn">⏸</button>
