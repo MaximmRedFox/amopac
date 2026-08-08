@@ -200,9 +200,11 @@
     left:8px;
     bottom:8px;
     z-index:3;
-    grid-template-columns:42px 42px 42px;
-    grid-template-rows:42px 42px 42px;
-    gap:4px;
+    grid-template-columns:30px 30px 30px;
+    grid-template-rows:30px 30px 30px;
+    gap:3px;
+    opacity:0.68;
+    touch-action:none;
   }
   #touchpad button.tp{
     margin:0;
@@ -210,13 +212,32 @@
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:1.1em;
+    font-size:0.85em;
     background:rgba(10,10,26,0.55);
-    border:2px solid rgba(0,229,255,0.55);
+    border:1.5px solid rgba(0,229,255,0.55);
     color:var(--amo);
-    box-shadow:0 0 8px rgba(0,229,255,0.25);
-    border-radius:8px;
+    box-shadow:0 0 6px rgba(0,229,255,0.25);
+    border-radius:6px;
     backdrop-filter:blur(1px);
+  }
+  #padHandle{
+    position:absolute;
+    top:-16px;
+    left:50%;
+    transform:translateX(-50%);
+    width:36px;
+    height:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(10,10,26,0.75);
+    border:1.5px solid rgba(0,229,255,0.55);
+    border-bottom:none;
+    border-radius:6px 6px 0 0;
+    color:var(--amo);
+    font-size:10px;
+    letter-spacing:2px;
+    cursor:grab;
   }
   @media (pointer:coarse){
     #touchpad{display:grid;}
@@ -300,6 +321,7 @@
       <button id="closeLeaderboard">Close</button>
     </div>
     <div id="touchpad">
+      <div id="padHandle" title="Drag to move">⠿⠿</div>
       <div></div><button class="tp" data-dir="up">▲</button><div></div>
       <button class="tp" data-dir="left">◀</button><button class="tp" id="pauseBtn">⏸</button><button class="tp" data-dir="right">▶</button>
       <div></div><button class="tp" data-dir="down">▼</button><div></div>
@@ -582,6 +604,75 @@ document.querySelectorAll('#touchpad .tp[data-dir]').forEach(btn=>{
 const pauseBtn = document.getElementById('pauseBtn');
 pauseBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); togglePause(); }, {passive:false});
 pauseBtn.addEventListener('click', togglePause);
+
+// Drag the D-pad by its handle so it can be moved off whatever part of the
+// maze it's covering. Position is saved as a fraction of the stage size so
+// it stays sensible across orientation changes / different screens.
+(function setupPadDrag(){
+  const stageEl = document.getElementById('stage');
+  const pad = document.getElementById('touchpad');
+  const handle = document.getElementById('padHandle');
+  let dragging=false, startX=0, startY=0, startLeft=0, startTop=0;
+
+  function applyPosition(leftPx, topPx){
+    const stageRect = stageEl.getBoundingClientRect();
+    const maxLeft = Math.max(0, stageRect.width - pad.offsetWidth);
+    const maxTop = Math.max(0, stageRect.height - pad.offsetHeight);
+    leftPx = Math.min(Math.max(leftPx,0), maxLeft);
+    topPx = Math.min(Math.max(topPx,0), maxTop);
+    pad.style.left = leftPx+'px';
+    pad.style.top = topPx+'px';
+    pad.style.bottom = 'auto';
+    return {leftPx, topPx, stageRect};
+  }
+  function restorePosition(){
+    const saved = localStorage.getItem('amopac_pad_pos');
+    if(!saved) return;
+    try{
+      const {xf,yf} = JSON.parse(saved);
+      const stageRect = stageEl.getBoundingClientRect();
+      applyPosition(xf*(stageRect.width-pad.offsetWidth), yf*(stageRect.height-pad.offsetHeight));
+    }catch(e){}
+  }
+  function savePosition(leftPx, topPx, stageRect){
+    const maxLeft = Math.max(1, stageRect.width - pad.offsetWidth);
+    const maxTop = Math.max(1, stageRect.height - pad.offsetHeight);
+    localStorage.setItem('amopac_pad_pos', JSON.stringify({xf:leftPx/maxLeft, yf:topPx/maxTop}));
+  }
+
+  function pointerXY(e){
+    const t = e.touches && e.touches[0] ? e.touches[0] : e;
+    return {x:t.clientX, y:t.clientY};
+  }
+  function dragStart(e){
+    dragging = true;
+    const p = pointerXY(e);
+    startX=p.x; startY=p.y;
+    startLeft = pad.offsetLeft; startTop = pad.offsetTop;
+    e.preventDefault();
+  }
+  function dragMove(e){
+    if(!dragging) return;
+    const p = pointerXY(e);
+    applyPosition(startLeft + (p.x-startX), startTop + (p.y-startY));
+    e.preventDefault();
+  }
+  function dragEnd(){
+    if(!dragging) return;
+    dragging = false;
+    const stageRect = stageEl.getBoundingClientRect();
+    savePosition(pad.offsetLeft, pad.offsetTop, stageRect);
+  }
+  handle.addEventListener('touchstart', dragStart, {passive:false});
+  window.addEventListener('touchmove', dragMove, {passive:false});
+  window.addEventListener('touchend', dragEnd);
+  handle.addEventListener('mousedown', dragStart);
+  window.addEventListener('mousemove', dragMove);
+  window.addEventListener('mouseup', dragEnd);
+
+  restorePosition();
+  window.addEventListener('resize', restorePosition);
+})();
 
 function togglePause(){
   if(state==='PLAYING'){ state='PAUSED'; showOverlay('SIMULATION PAUSED','Press P or Enter to resume.', '', ''); }
