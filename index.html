@@ -200,8 +200,8 @@
      between "up", "left", etc. The arrows are just visual labels. */
   #dpad{
     position:relative;
-    width:150px;
-    height:150px;
+    width:104px;
+    height:104px;
     border-radius:50%;
     background:radial-gradient(circle at 35% 30%, rgba(30,40,60,0.75), rgba(8,8,20,0.7));
     border:2px solid rgba(0,229,255,0.55);
@@ -213,18 +213,18 @@
     position:absolute;
     background:rgba(0,229,255,0.18);
   }
-  #dpad::before{ left:50%; top:8px; bottom:8px; width:1px; transform:translateX(-50%); }
-  #dpad::after{ top:50%; left:8px; right:8px; height:1px; transform:translateY(-50%); }
+  #dpad::before{ left:50%; top:6px; bottom:6px; width:1px; transform:translateX(-50%); }
+  #dpad::after{ top:50%; left:6px; right:6px; height:1px; transform:translateY(-50%); }
   #dpad .arrow{
     position:absolute;
     color:var(--amo);
-    font-size:1.3em;
+    font-size:1.05em;
     pointer-events:none;
   }
-  #dpad .arrow.up{ top:10px; left:50%; transform:translateX(-50%); }
-  #dpad .arrow.down{ bottom:10px; left:50%; transform:translateX(-50%); }
-  #dpad .arrow.left{ left:10px; top:50%; transform:translateY(-50%); }
-  #dpad .arrow.right{ right:10px; top:50%; transform:translateY(-50%); }
+  #dpad .arrow.up{ top:7px; left:50%; transform:translateX(-50%); }
+  #dpad .arrow.down{ bottom:7px; left:50%; transform:translateX(-50%); }
+  #dpad .arrow.left{ left:7px; top:50%; transform:translateY(-50%); }
+  #dpad .arrow.right{ right:7px; top:50%; transform:translateY(-50%); }
   #touchpad button.tp{
     margin:0;
     padding:0;
