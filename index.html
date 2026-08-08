@@ -188,15 +188,25 @@
   }
   #touchpad{
     display:none;
-    position:relative;
+    align-items:center;
+    justify-content:center;
+    gap:26px;
     margin-top:14px;
+    touch-action:none;
+  }
+  #dpad{
+    position:relative;
+    display:grid;
     grid-template-columns:46px 46px 46px;
     grid-template-rows:46px 46px 46px;
     gap:7px;
-    touch-action:none;
     padding:10px;
     border-radius:50%;
     background:radial-gradient(circle at center, rgba(0,229,255,0.09) 0%, rgba(0,229,255,0.02) 65%, transparent 75%);
+  }
+  #dpad .hub{
+    border-radius:50%;
+    border:1.5px solid rgba(0,229,255,0.25);
   }
   #touchpad button.tp{
     margin:0;
@@ -212,8 +222,14 @@
     border-radius:50%;
     backdrop-filter:blur(1px);
   }
+  .pauseBtn{
+    width:40px;
+    height:40px;
+    font-size:1em;
+    flex-shrink:0;
+  }
   @media (pointer:coarse){
-    #touchpad{display:grid;}
+    #touchpad{display:flex;}
   }
   #leaderboardPanel{
     position:absolute;
@@ -295,9 +311,13 @@
   </div>
 
   <div id="touchpad">
-    <div></div><button class="tp" data-dir="up">▲</button><div></div>
-    <button class="tp" data-dir="left">◀</button><button class="tp" id="pauseBtn">⏸</button><button class="tp" data-dir="right">▶</button>
-    <div></div><button class="tp" data-dir="down">▼</button><div></div>
+    <button class="tp pauseBtn">⏸</button>
+    <div id="dpad">
+      <div></div><button class="tp" data-dir="up">▲</button><div></div>
+      <button class="tp" data-dir="left">◀</button><div class="hub"></div><button class="tp" data-dir="right">▶</button>
+      <div></div><button class="tp" data-dir="down">▼</button><div></div>
+    </div>
+    <button class="tp pauseBtn">⏸</button>
   </div>
 
   <div class="foot">Same rules as the classic arcade game, just flipped. Fan-made — no original assets copied. "RUG", "AMO" and "TSL" are just in-simulation nicknames, not affiliated with any token or project.</div>
@@ -590,9 +610,10 @@ window.addEventListener('keydown', (e)=>{
     btn.addEventListener('click', ()=>{ if(state!=='PLAYING') return; groupDir = DIRS[btn.dataset.dir]; });
   });
 })();
-const pauseBtn = document.getElementById('pauseBtn');
-pauseBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); togglePause(); }, {passive:false});
-pauseBtn.addEventListener('click', (e)=>{ e.stopPropagation(); togglePause(); });
+document.querySelectorAll('.pauseBtn').forEach(pauseBtn=>{
+  pauseBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); togglePause(); }, {passive:false});
+  pauseBtn.addEventListener('click', (e)=>{ e.stopPropagation(); togglePause(); });
+});
 
 function togglePause(){
   if(state==='PLAYING'){ state='PAUSED'; }
