@@ -916,6 +916,7 @@ function updateHUD(){
   document.getElementById('squad').innerHTML = ghosts.map(g=> g.alive?'🧬':'<span class="dead">🧬</span>').join('');
 }
 
+window.__dbg = { ghosts, get state(){return state;}, get level(){return level;}, set dotsLeft(v){dotsLeft=v;}, get dotsLeft(){return dotsLeft;} };
 let lastTs = performance.now();
 
 function loop(ts){
