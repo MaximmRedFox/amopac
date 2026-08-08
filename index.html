@@ -194,22 +194,37 @@
     margin-top:14px;
     touch-action:none;
   }
+  /* One continuous circular surface — direction is worked out from the
+     angle of the touch relative to the center (see setupPad in the
+     script), not from separate buttons, so there are no dead gaps
+     between "up", "left", etc. The arrows are just visual labels. */
   #dpad{
     position:relative;
-    display:grid;
-    grid-template-columns:46px 46px 46px;
-    grid-template-rows:46px 46px 46px;
-    gap:0;
-    padding:14px;
+    width:150px;
+    height:150px;
     border-radius:50%;
-    background:radial-gradient(circle at center, rgba(0,229,255,0.09) 0%, rgba(0,229,255,0.02) 65%, transparent 75%);
+    background:radial-gradient(circle at 35% 30%, rgba(30,40,60,0.75), rgba(8,8,20,0.7));
+    border:2px solid rgba(0,229,255,0.55);
+    box-shadow:0 0 10px rgba(0,229,255,0.25), inset 0 0 20px rgba(0,229,255,0.08);
+    touch-action:none;
   }
-  #dpad .tp{
-    width:58px;
-    height:58px;
-    justify-self:center;
-    align-self:center;
+  #dpad::before, #dpad::after{
+    content:'';
+    position:absolute;
+    background:rgba(0,229,255,0.18);
   }
+  #dpad::before{ left:50%; top:8px; bottom:8px; width:1px; transform:translateX(-50%); }
+  #dpad::after{ top:50%; left:8px; right:8px; height:1px; transform:translateY(-50%); }
+  #dpad .arrow{
+    position:absolute;
+    color:var(--amo);
+    font-size:1.3em;
+    pointer-events:none;
+  }
+  #dpad .arrow.up{ top:10px; left:50%; transform:translateX(-50%); }
+  #dpad .arrow.down{ bottom:10px; left:50%; transform:translateX(-50%); }
+  #dpad .arrow.left{ left:10px; top:50%; transform:translateY(-50%); }
+  #dpad .arrow.right{ right:10px; top:50%; transform:translateY(-50%); }
   #touchpad button.tp{
     margin:0;
     padding:0;
@@ -315,9 +330,10 @@
   <div id="touchpad">
     <button class="tp pauseBtn">⏸</button>
     <div id="dpad">
-      <div></div><button class="tp" data-dir="up">▲</button><div></div>
-      <button class="tp" data-dir="left">◀</button><div></div><button class="tp" data-dir="right">▶</button>
-      <div></div><button class="tp" data-dir="down">▼</button><div></div>
+      <span class="arrow up">▲</span>
+      <span class="arrow left">◀</span>
+      <span class="arrow right">▶</span>
+      <span class="arrow down">▼</span>
     </div>
     <button class="tp pauseBtn">⏸</button>
   </div>
@@ -595,10 +611,19 @@ window.addEventListener('keydown', (e)=>{
 // (without lifting) re-evaluates the direction on every touchmove, instead
 // of only reacting to a fresh touchstart on each button.
 (function setupPad(){
-  const pad = document.getElementById('touchpad');
+  const dpad = document.getElementById('dpad');
+  // Direction from the angle of the touch relative to the disc's center —
+  // one continuous surface, so there's no gap between zones to fall into.
   function dirAt(x,y){
-    const el = document.elementFromPoint(x,y);
-    return (el && el.classList && el.classList.contains('tp') && el.dataset.dir) ? el.dataset.dir : null;
+    const r = dpad.getBoundingClientRect();
+    const dx = x - (r.left + r.width/2);
+    const dy = y - (r.top + r.height/2);
+    if(Math.hypot(dx,dy) < 6) return null; // tiny dead zone at the exact pivot
+    const deg = Math.atan2(dy,dx) * 180/Math.PI; // 0=right, 90=down, ±180=left, -90=up
+    if(deg>=-45 && deg<45) return 'right';
+    if(deg>=45 && deg<135) return 'down';
+    if(deg>=-135 && deg<-45) return 'up';
+    return 'left';
   }
   function handle(e){
     if(state!=='PLAYING') return;
@@ -606,11 +631,10 @@ window.addEventListener('keydown', (e)=>{
     const dir = dirAt(t.clientX, t.clientY);
     if(dir){ groupDir = DIRS[dir]; e.preventDefault(); }
   }
-  pad.addEventListener('touchstart', handle, {passive:false});
-  pad.addEventListener('touchmove', handle, {passive:false});
-  document.querySelectorAll('#touchpad .tp[data-dir]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{ if(state!=='PLAYING') return; groupDir = DIRS[btn.dataset.dir]; });
-  });
+  dpad.addEventListener('touchstart', handle, {passive:false});
+  dpad.addEventListener('touchmove', handle, {passive:false});
+  dpad.addEventListener('mousedown', handle);
+  dpad.addEventListener('click', handle);
 })();
 document.querySelectorAll('.pauseBtn').forEach(pauseBtn=>{
   pauseBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); e.stopPropagation(); togglePause(); }, {passive:false});
